@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FotoEditor Web App</title>
+
+  <!-- LOGO CIRCOLARE NELL'HEAD -->
+  <link rel="icon" type="image/png" href="logo.png">
+  <link rel="apple-touch-icon" href="logo.png">
+
+  <!-- CONFIGURAZIONE PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2196F3">
+
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --accent-color: #2196F3;
+      --btn-hover: #1e88e5;
+      --border-color: #e0e0e0;
+      --noskyn-btn-bg: #673ab7;
+      --noskyn-btn-hover: #512da8;
+    }
+
+    body.dark-mode {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #e0e0e0;
+      --accent-color: #BB86FC;
+      --btn-hover: #9954e6;
+      --border-color: #333333;
+      --noskyn-btn-bg: #7c4dff;
+      --noskyn-btn-hover: #651fff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      text-align: center;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+    }
+
+    .header-logo {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    h2 { margin-top: 0; margin-bottom: 20px; }
+
+    .btn {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      margin: 8px 4px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+      display: inline-block;
+      text-decoration: none;
+    }
+    .btn:hover { background-color: var(--btn-hover); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { background-color: #888888; cursor: not-allowed; }
+
+    /* Stile speciale per il pulsante Noskyn */
+    .btn-noskyn {
+      background-color: var(--noskyn-btn-bg);
+      color: white;
+      box-shadow: 0 4px 12px rgba(103, 58, 183, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-noskyn:hover {
+      background-color: var(--noskyn-btn-hover);
+    }
+
+    .footer-projects {
+      margin-top: 25px;
+      padding-top: 15px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    input[type="file"] { display: none; }
+
+    .global-controls {
+      background: rgba(0,0,0,0.03);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    body.dark-mode .global-controls {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .global-controls h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+      text-align: left;
+    }
+
+    .photo-control {
+      background: rgba(0,0,0,0.03);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    body.dark-mode .photo-control {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .photo-control label.btn {
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    .slider-container input[type="range"] {
+      flex: 1;
+    }
+
+    .percent-val {
+      font-weight: bold;
+      min-width: 50px;
+    }
+
+    .bg-options {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .bg-options label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    input[type="color"] {
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      background: none;
+    }
+
+    .canvas-container {
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+
+    canvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                        linear-gradient(-45deg, #ccc 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #ccc 75%), 
+                        linear-gradient(-45deg, transparent 75%, #ccc 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    }
+
+    #downloadBtn {
+      background-color: #4CAF50;
+      text-decoration: none;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <button class="theme-toggle" id="themeBtn" title="Cambia Tema"></button>
+
+  <img src="logo.png" alt="Logo App" class="header-logo">
+  <h2>FotoEditor & Unione Foto</h2>
+
+  <!-- CONTROLLI GENERALI (LAYOUT E SFONDO) -->
+  <div class="global-controls">
+    <h3>Impostazioni di Layout</h3>
+    <div class="slider-container">
+      <span>Spazio tra le foto:</span>
+      <input type="range" id="gapSlider" min="0" max="100" value="10">
+      <span class="percent-val" id="gapVal">10px</span>
+    </div>
+    <div class="slider-container" style="margin-bottom: 15px;">
+      <span>Bordi arrotondati:</span>
+      <input type="range" id="radiusSlider" min="0" max="100" value="0">
+      <span class="percent-val" id="radiusVal">0px</span>
+    </div>
+
+    <h3>Colore di Sfondo</h3>
+    <div class="bg-options">
+      <label><input type="radio" name="bgType" value="transparent" checked> Trasparente</label>
+      <label><input type="radio" name="bgType" value="white"> Bianco</label>
+      <label><input type="radio" name="bgType" value="black"> Nero</label>
+      <label>
+        <input type="radio" name="bgType" value="custom" id="customRadio"> Personalizzato
+        <input type="color" id="bgColorPicker" value="#2196f3">
+      </label>
+    </div>
+  </div>
+
+  <div class="controls-grid">
+    <!-- Slot Foto 1 -->
+    <div class="photo-control">
+      <label class="btn">
+        Seleziona Foto 1
+        <input type="file" class="img-input" data-index="0" accept="image/*">
+      </label>
+      <div class="slider-container">
+        <span>Dimensione:</span>
+        <input type="range" class="scale-slider" data-index="0" min="20" max="200" step="5" value="100">
+        <span class="percent-val" id="val-0">100%</span>
+      </div>
+    </div>
+
+    <!-- Slot Foto 2 -->
+    <div class="photo-control">
+      <label class="btn">
+        Seleziona Foto 2
+        <input type="file" class="img-input" data-index="1" accept="image/*">
+      </label>
+      <div class="slider-container">
+        <span>Dimensione:</span>
+        <input type="range" class="scale-slider" data-index="1" min="20" max="200" step="5" value="100">
+        <span class="percent-val" id="val-1">100%</span>
+      </div>
+    </div>
+
+    <!-- Slot Foto 3 -->
+    <div class="photo-control">
+      <label class="btn">
+        Seleziona Foto 3
+        <input type="file" class="img-input" data-index="2" accept="image/*">
+      </label>
+      <div class="slider-container">
+        <span>Dimensione:</span>
+        <input type="range" class="scale-slider" data-index="2" min="20" max="200" step="5" value="100">
+        <span class="percent-val" id="val-2">100%</span>
+      </div>
+    </div>
+
+    <!-- Slot Foto 4 -->
+    <div class="photo-control">
+      <label class="btn">
+        Seleziona Foto 4
+        <input type="file" class="img-input" data-index="3" accept="image/*">
+      </label>
+      <div class="slider-container">
+        <span>Dimensione:</span>
+        <input type="range" class="scale-slider" data-index="3" min="20" max="200" step="5" value="100">
+        <span class="percent-val" id="val-3">100%</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn" id="mergeBtn" disabled>Unisci Foto</button>
+
+  <div class="canvas-container">
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <a id="downloadBtn" class="btn" style="display:none;">Scarica Immagine Unita</a>
+
+  <!-- SEZIONE LINK ALTRI PROGETTI DI NOSKYN -->
+  <div class="footer-projects">
+    <!-- Sostituisci '#' con il link che desideri -->
+    <a href="#" target="_blank" class="btn btn-noskyn">
+       Altri progetti di Noskyn
+    </a>
+  </div>
+</div>
+
+<script>
+  // Gestione Dark Mode
+  const themeBtn = document.getElementById('themeBtn');
+  themeBtn.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    themeBtn.textContent = isDark ? '' : '';
+  });
+
+  const images = [null, null, null, null];
+  const scales = [1, 1, 1, 1];
+
+  const inputs = document.querySelectorAll('.img-input');
+  const sliders = document.querySelectorAll('.scale-slider');
+  const gapSlider = document.getElementById('gapSlider');
+  const gapVal = document.getElementById('gapVal');
+  const radiusSlider = document.getElementById('radiusSlider');
+  const radiusVal = document.getElementById('radiusVal');
+
+  const bgColorPicker = document.getElementById('bgColorPicker');
+  const customRadio = document.getElementById('customRadio');
+
+  const mergeBtn = document.getElementById('mergeBtn');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  bgColorPicker.addEventListener('input', () => {
+    customRadio.checked = true;
+  });
+
+  gapSlider.addEventListener('input', (e) => {
+    gapVal.textContent = `${e.target.value}px`;
+  });
+
+  radiusSlider.addEventListener('input', (e) => {
+    radiusVal.textContent = `${e.target.value}px`;
+  });
+
+  inputs.forEach(input => {
+    input.addEventListener('change', (e) => {
+      const idx = e.target.dataset.index;
+      const file = e.target.files[0];
+      if (file) {
+        const img = new Image();
+        img.onload = () => {
+          images[idx] = img;
+          checkReady();
+        };
+        img.src = URL.createObjectURL(file);
+      }
+    });
+  });
+
+  sliders.forEach(slider => {
+    slider.addEventListener('input', (e) => {
+      const idx = e.target.dataset.index;
+      const val = e.target.value;
+      document.getElementById(`val-${idx}`).textContent = `${val}%`;
+      scales[idx] = parseFloat(val) / 100;
+    });
+  });
+
+  function checkReady() {
+    const count = images.filter(img => img !== null).length;
+    mergeBtn.disabled = count === 0;
+  }
+
+  function drawRoundedImage(img, x, y, width, height, radius) {
+    ctx.save();
+    ctx.beginPath();
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(img, x, y, width, height);
+    ctx.restore();
+  }
+
+  function applyBackground(width, height) {
+    const bgType = document.querySelector('input[name="bgType"]:checked').value;
+    if (bgType === 'transparent') {
+      ctx.clearRect(0, 0, width, height);
+    } else {
+      let color = '#ffffff';
+      if (bgType === 'black') color = '#000000';
+      if (bgType === 'custom') color = bgColorPicker.value;
+      
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, width, height);
+    }
+  }
+
+  mergeBtn.addEventListener('click', () => {
+    const loadedImages = [];
+    images.forEach((img, idx) => {
+      if (img) {
+        loadedImages.push({
+          img: img,
+          width: img.width * scales[idx],
+          height: img.height * scales[idx]
+        });
+      }
+    });
+
+    if (loadedImages.length === 0) return;
+
+    const gap = parseInt(gapSlider.value, 10);
+    const radius = parseInt(radiusSlider.value, 10);
+
+    let canvasWidth = 0;
+    let canvasHeight = 0;
+
+    if (loadedImages.length === 1) {
+      canvasWidth = loadedImages[0].width;
+      canvasHeight = loadedImages[0].height;
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      applyBackground(canvasWidth, canvasHeight);
+      drawRoundedImage(loadedImages[0].img, 0, 0, loadedImages[0].width, loadedImages[0].height, radius);
+    } 
+    else if (loadedImages.length === 2) {
+      canvasWidth = loadedImages[0].width + loadedImages[1].width + gap;
+      canvasHeight = Math.max(loadedImages[0].height, loadedImages[1].height);
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      applyBackground(canvasWidth, canvasHeight);
+      
+      drawRoundedImage(loadedImages[0].img, 0, 0, loadedImages[0].width, loadedImages[0].height, radius);
+      drawRoundedImage(loadedImages[1].img, loadedImages[0].width + gap, 0, loadedImages[1].width, loadedImages[1].height, radius);
+    } 
+    else if (loadedImages.length === 3 || loadedImages.length === 4) {
+      const row1Width = loadedImages[0].width + (loadedImages[1] ? loadedImages[1].width + gap : 0);
+      const row2Width = (loadedImages[2] ? loadedImages[2].width : 0) + (loadedImages[3] ? loadedImages[3].width + gap : 0);
+      canvasWidth = Math.max(row1Width, row2Width);
+
+      const row1Height = Math.max(loadedImages[0].height, loadedImages[1] ? loadedImages[1].height : 0);
+      const row2Height = Math.max(loadedImages[2] ? loadedImages[2].height : 0, loadedImages[3] ? loadedImages[3].height : 0);
+      canvasHeight = row1Height + row2Height + gap;
+
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      applyBackground(canvasWidth, canvasHeight);
+
+      drawRoundedImage(loadedImages[0].img, 0, 0, loadedImages[0].width, loadedImages[0].height, radius);
+      
+      if (loadedImages[1]) {
+        drawRoundedImage(loadedImages[1].img, loadedImages[0].width + gap, 0, loadedImages[1].width, loadedImages[1].height, radius);
+      }
+      
+      if (loadedImages[2]) {
+        drawRoundedImage(loadedImages[2].img, 0, row1Height + gap, loadedImages[2].width, loadedImages[2].height, radius);
+      }
+      
+      if (loadedImages[3]) {
+        drawRoundedImage(loadedImages[3].img, loadedImages[2].width + gap, row1Height + gap, loadedImages[3].width, loadedImages[3].height, radius);
+      }
+    }
+
+    downloadBtn.href = canvas.toDataURL('image/png');
+    downloadBtn.download = 'foto_unita.png';
+    downloadBtn.style.display = 'inline-block';
+  });
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+
+</body>
+</html>
